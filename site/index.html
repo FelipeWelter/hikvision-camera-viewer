@@ -1,45 +1,34 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#0b1220" />
-  <title>Monitoramento de Câmeras</title>
-  <link rel="stylesheet" href="assets/style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#08111f">
+  <title>Central de Câmeras</title>
+  <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-  <header class="topbar">
-    <div>
-      <h1>Monitoramento de Câmeras</h1>
-      <p>Visualização Hikvision</p>
-    </div>
-
-    <div class="header-actions">
-      <div class="live-indicator"><span></span> Sistema online</div>
-      <button id="refreshBtn" type="button">Atualizar</button>
+  <header>
+    <div><span class="eyebrow">MONITORAMENTO 6ª CIA COM MEC</span><h1>Central de Câmeras</h1></div>
+    <div class="controls">
+      <input id="search" type="search" placeholder="Buscar câmera…" aria-label="Buscar câmera">
+      <select id="columns" aria-label="Número de colunas">
+        <option value="1">1 coluna</option><option value="2" selected>2 colunas</option>
+        <option value="3">3 colunas</option><option value="4">4 colunas</option>
+      </select>
     </div>
   </header>
-
-  <main>
-    <section class="toolbar">
-      <input id="searchInput" type="search" placeholder="Buscar câmera..." autocomplete="off" />
-      <select id="gridSelect" aria-label="Quantidade de colunas">
-        <option value="1">1 coluna</option>
-        <option value="2" selected>2 colunas</option>
-        <option value="3">3 colunas</option>
-        <option value="4">4 colunas</option>
-      </select>
-      <div class="counter"><strong id="onlineCount">0</strong>/<span id="totalCount">0</span> câmeras</div>
-    </section>
-
-    <section id="cameraGrid" class="camera-grid cols-2"></section>
-  </main>
-
-  <div id="emptyState" class="empty hidden">
-    Nenhuma câmera encontrada.
-  </div>
-
+  <main id="grid" class="grid cols-2"></main>
+  <template id="camera-card">
+    <article class="card">
+      <div class="video-wrap">
+        <video muted autoplay playsinline controls></video>
+        <div class="state"><i></i><span>Conectando</span></div>
+      </div>
+      <footer><div><h2></h2><p></p></div><button type="button" title="Tela cheia">⛶</button></footer>
+    </article>
+  </template>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
   <script src="config/cameras.js"></script>
   <script src="assets/app.js"></script>
 </body>

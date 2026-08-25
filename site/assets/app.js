@@ -1,187 +1,54 @@
-const grid = document.getElementById("cameraGrid");
-const searchInput = document.getElementById("searchInput");
-const gridSelect = document.getElementById("gridSelect");
-const refreshBtn = document.getElementById("refreshBtn");
-const onlineCount = document.getElementById("onlineCount");
-const totalCount = document.getElementById("totalCount");
-const emptyState = document.getElementById("emptyState");
-
+const grid = document.querySelector('#grid');
+const template = document.querySelector('#camera-card');
 const players = new Map();
-let cameras = Array.isArray(window.CAMERAS) ? window.CAMERAS : [];
-let online = new Set();
 
-function setStatus(id, status, text) {
-  const badge = document.querySelector(`[data-badge="${id}"]`);
-  if (!badge) return;
-  badge.className = `badge ${status}`;
-  badge.textContent = text;
-
-  if (status === "online") online.add(id);
-  else online.delete(id);
-
-  onlineCount.textContent = online.size;
+function destroyPlayers() {
+  for (const player of players.values()) player?.destroy();
+  players.clear();
 }
 
-function destroyPlayer(id) {
-  const player = players.get(id);
-  if (player) {
-    player.destroy();
-    players.delete(id);
-  }
-}
-
-function initVideo(camera) {
-  const video = document.getElementById(`video-${camera.id}`);
-  const errorBox = document.getElementById(`error-${camera.id}`);
-  if (!video) return;
-
-  destroyPlayer(camera.id);
-  errorBox.classList.add("hidden");
-  setStatus(camera.id, "", "Conectando");
-
-  if (!camera.hls) {
-    errorBox.innerHTML = "<strong>Sem stream configurado</strong>Defina a URL HLS em config/cameras.js";
-    errorBox.classList.remove("hidden");
-    setStatus(camera.id, "error", "Sem stream");
-    return;
-  }
-
-  const markOnline = () => {
-    errorBox.classList.add("hidden");
-    setStatus(camera.id, "online", "AO VIVO");
+function connect(video, camera, card) {
+  const label = card.querySelector('.state span');
+  const setState = (text, online = false) => {
+    label.textContent = text;
+    card.classList.toggle('online', online);
   };
-
-  const markError = () => {
-    errorBox.innerHTML = "<strong>Stream indisponível</strong>Verifique o gateway RTSP → HLS e a URL configurada.";
-    errorBox.classList.remove("hidden");
-    setStatus(camera.id, "error", "Offline");
-  };
-
-  video.addEventListener("playing", markOnline, { once: true });
-  video.addEventListener("error", markError, { once: true });
-
-  if (video.canPlayType("application/vnd.apple.mpegurl")) {
+  if (video.canPlayType('application/vnd.apple.mpegurl')) {
     video.src = camera.hls;
-    video.play().catch(() => {});
-    return;
-  }
-
-  if (window.Hls && Hls.isSupported()) {
-    const hls = new Hls({
-      lowLatencyMode: true,
-      backBufferLength: 30,
-      liveSyncDurationCount: 2,
-      liveMaxLatencyDurationCount: 5
-    });
-
-    players.set(camera.id, hls);
+  } else if (window.Hls?.isSupported()) {
+    const hls = new Hls({ liveSyncDurationCount: 2, maxLiveSyncPlaybackRate: 1.5 });
     hls.loadSource(camera.hls);
     hls.attachMedia(video);
-
-    hls.on(Hls.Events.MANIFEST_PARSED, () => {
-      video.play().catch(() => {});
-    });
-
     hls.on(Hls.Events.ERROR, (_, data) => {
-      if (data.fatal) {
-        markError();
-        if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-          setTimeout(() => {
-            try { hls.startLoad(); } catch (_) {}
-          }, 3000);
-        }
-      }
+      if (!data.fatal) return;
+      setState('Reconectando');
+      if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
+      else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError();
+      else { hls.destroy(); setTimeout(() => connect(video, camera, card), 5000); }
     });
-  } else {
-    markError();
-  }
+    players.set(camera.id, hls);
+  } else setState('Navegador incompatível');
+  video.addEventListener('playing', () => setState('Ao vivo', true));
+  video.addEventListener('waiting', () => setState('Carregando'));
+  video.addEventListener('error', () => setState('Sem sinal'));
+  video.play().catch(() => {});
 }
 
-function cameraCard(camera) {
-  const article = document.createElement("article");
-  article.className = "camera-card";
-  article.dataset.search = `${camera.name} ${camera.location || ""}`.toLowerCase();
-
-  article.innerHTML = `
-    <div class="video-wrap">
-      <video id="video-${camera.id}" autoplay muted playsinline controls></video>
-      <div class="video-overlay"></div>
-      <div class="badge" data-badge="${camera.id}">Conectando</div>
-      <div id="error-${camera.id}" class="error-message hidden"></div>
-    </div>
-    <div class="camera-info">
-      <div>
-        <h2>${escapeHtml(camera.name)}</h2>
-        <p>${escapeHtml(camera.location || "Sem localização")}</p>
-      </div>
-      <div class="camera-actions">
-        <button class="icon-btn" data-refresh="${camera.id}" title="Reconectar">↻</button>
-        <button class="icon-btn" data-fullscreen="${camera.id}" title="Tela cheia">⛶</button>
-      </div>
-    </div>
-  `;
-
-  return article;
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function render() {
-  grid.innerHTML = "";
-  online.clear();
-  totalCount.textContent = cameras.length;
-  onlineCount.textContent = "0";
-
-  cameras.forEach(camera => grid.appendChild(cameraCard(camera)));
-  cameras.forEach(initVideo);
-
-  applySearch();
-}
-
-function applySearch() {
-  const term = searchInput.value.trim().toLowerCase();
-  let visible = 0;
-
-  document.querySelectorAll(".camera-card").forEach(card => {
-    const show = !term || card.dataset.search.includes(term);
-    card.classList.toggle("hidden", !show);
-    if (show) visible++;
+function render(filter = '') {
+  destroyPlayers();
+  grid.replaceChildren();
+  const query = filter.trim().toLocaleLowerCase('pt-BR');
+  window.CAMERAS.filter(c => `${c.name} ${c.location}`.toLocaleLowerCase('pt-BR').includes(query)).forEach(camera => {
+    const card = template.content.firstElementChild.cloneNode(true);
+    card.querySelector('h2').textContent = camera.name;
+    card.querySelector('p').textContent = camera.location;
+    const video = card.querySelector('video');
+    card.querySelector('button').addEventListener('click', () => card.requestFullscreen?.());
+    grid.append(card);
+    connect(video, camera, card);
   });
-
-  emptyState.classList.toggle("hidden", visible !== 0);
 }
 
-searchInput.addEventListener("input", applySearch);
-
-gridSelect.addEventListener("change", () => {
-  grid.className = `camera-grid cols-${gridSelect.value}`;
-});
-
-refreshBtn.addEventListener("click", () => {
-  cameras.forEach(initVideo);
-});
-
-grid.addEventListener("click", event => {
-  const refreshId = event.target.dataset.refresh;
-  if (refreshId) {
-    const camera = cameras.find(c => c.id === refreshId);
-    if (camera) initVideo(camera);
-    return;
-  }
-
-  const fullscreenId = event.target.dataset.fullscreen;
-  if (fullscreenId) {
-    const video = document.getElementById(`video-${fullscreenId}`);
-    if (video?.requestFullscreen) video.requestFullscreen();
-    else if (video?.webkitEnterFullscreen) video.webkitEnterFullscreen();
-  }
-});
-
+document.querySelector('#search').addEventListener('input', event => render(event.target.value));
+document.querySelector('#columns').addEventListener('change', event => grid.className = `grid cols-${event.target.value}`);
 render();

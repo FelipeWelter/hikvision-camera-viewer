@@ -1,19 +1,23 @@
-# Exemplo de configuração para MediaMTX.
-# Troque os IPs, usuários e senhas pelos dados reais.
+logLevel: info
+
+# RTSP e HLS ficam disponíveis apenas dentro da rede Docker npm_proxy.
+rtsp: yes
+rtspAddress: :8554
+hls: yes
+hlsAddress: :8888
+hlsAllowOrigins: ['*']
+hlsAlwaysRemux: no
 
 paths:
   cam01:
-    source: rtsp://acesso1:@acesso@@200.130.9.180:554/Streaming/Channels/101
+    source: rtsp://admin:1Pelcom@@200.130.9.180:554/Streaming/Channels/101
     sourceOnDemand: yes
-
   cam02:
-    source: rtsp://acesso1:@acesso@@200.130.9.181:554/Streaming/Channels/101
+    source: rtsp://admin:1Pelcom@@200.130.9.183:554/Streaming/Channels/101
     sourceOnDemand: yes
-
   cam03:
-    source: rtsp://USUARIO:SENHA@192.168.1.103:554/Streaming/Channels/101
+    source: rtsp://USUARIO:SENHA@IP_DA_CAMERA_03:554/Streaming/Channels/101
     sourceOnDemand: yes
-
   cam04:
-    source: rtsp://USUARIO:SENHA@192.168.1.104:554/Streaming/Channels/101
+    source: rtsp://USUARIO:SENHA@IP_DA_CAMERA_04:554/Streaming/Channels/101
     sourceOnDemand: yes

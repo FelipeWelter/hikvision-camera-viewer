@@ -1,20 +1,27 @@
 services:
-  mediamtx:
-    image: bluenviron/mediamtx:latest
-    container_name: mediamtx
-    restart: unless-stopped
-    ports:
-      - "8554:8554"   # RTSP
-      - "8888:8888"   # HLS
-      - "8889:8889"   # WebRTC
-    volumes:
-      - ./mediamtx.yml:/mediamtx.yml:ro
-
   cameras-web:
-    image: nginx:alpine
-    container_name: cameras-web
+    image: nginx:1.27-alpine
+    container_name: hikvision-cameras-web
     restart: unless-stopped
-    ports:
-      - "8080:80"
     volumes:
       - ./site:/usr/share/nginx/html:ro
+    networks:
+      npm_proxy:
+        aliases:
+          - cameras-web
+
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: hikvision-mediamtx
+    restart: unless-stopped
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yml:ro
+    networks:
+      npm_proxy:
+        aliases:
+          - mediamtx
+
+networks:
+  npm_proxy:
+    external: true
+    name: npm_proxy
