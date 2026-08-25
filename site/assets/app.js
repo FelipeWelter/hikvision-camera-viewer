@@ -1,3 +1,12 @@
+/*
+ * Sistema de Monitoramento de Câmeras
+ * Copyright © 2026 Felipe Welter
+ * Todos os direitos reservados.
+ *
+ * É proibida a reprodução, distribuição ou modificação
+ * deste código sem autorização do autor.
+ */
+
 const grid = document.querySelector('#grid');
 const template = document.querySelector('#camera-card');
 const players = new Map();
