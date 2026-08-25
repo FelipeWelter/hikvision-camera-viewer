@@ -1,0 +1,20 @@
+services:
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: mediamtx
+    restart: unless-stopped
+    ports:
+      - "8554:8554"   # RTSP
+      - "8888:8888"   # HLS
+      - "8889:8889"   # WebRTC
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yml:ro
+
+  cameras-web:
+    image: nginx:alpine
+    container_name: cameras-web
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./site:/usr/share/nginx/html:ro
