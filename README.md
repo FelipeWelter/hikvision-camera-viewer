@@ -15,6 +15,8 @@ Edite `mediamtx.yml` e substitua usuário, senha e IP de cada câmera. Se a senh
 
 Edite `site/config/cameras.js` para ajustar nomes, locais ou quantidade de câmeras. O identificador deve coincidir com o caminho em `mediamtx.yml`.
 
+Por padrão, o painel usa duas colunas. Em telas com mais de 640 px, as quatro primeiras câmeras ocupam duas linhas dentro da altura disponível entre o cabeçalho e o rodapé, sem rolagem da página. Se houver mais de quatro câmeras, somente a área da grade passa a rolar. Em celulares, os cards voltam para uma coluna com rolagem normal.
+
 ## 2. Rede Docker compartilhada
 
 Crie uma vez a rede usada pelo projeto e conecte a ela o contêiner do Nginx Proxy Manager:
