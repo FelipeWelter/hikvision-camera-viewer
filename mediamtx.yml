@@ -19,8 +19,8 @@ paths:
     source: rtsp://admin:1Pelcom@@200.130.17.249:554/Streaming/Channels/101
     sourceOnDemand: yes
   cam04:
-    source: rtsp://admin:1Pelcom@@IP_DA_CAMERA_04:554/Streaming/Channels/101
+    source: rtsp://admin:1Pelcom@@200.130.17.248:554/Streaming/Channels/101
     sourceOnDemand: yes
   cam05:
-    source: rtsp://admin:1Pelcom@@200.130.17.248:554/Streaming/Channels/101
+    source: rtsp://admin:1Pelcom@@IPCAM5BLOCOJ:554/Streaming/Channels/101
     sourceOnDemand: yes
